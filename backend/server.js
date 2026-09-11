@@ -41,15 +41,10 @@ connectDB().then((conn) => {
 const app = express();
 const server = http.createServer(app);
 
-// Allowed origins for CORS (local dev + production Vercel apps)
-const allowedOrigins = process.env.CLIENT_URL 
-  ? [process.env.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000']
-  : '*';
-
 // Setup Socket.IO for real-time Uber/Rapido working
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   },
@@ -100,7 +95,14 @@ io.on('connection', (socket) => {
 
 // Middleware
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman) or any vercel.app or localhost
+    if (!origin || origin.includes('localhost') || origin.endsWith('.vercel.app') || origin === process.env.CLIENT_URL) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
